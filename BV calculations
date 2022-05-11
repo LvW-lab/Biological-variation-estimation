@@ -1,0 +1,75 @@
+#Packages
+
+library(GAD)
+library(outliers) 
+library(tidyverse)
+library(VCA)
+library(lme4)
+
+#Loading dataset - DUplicate measures
+
+dm.df <- read.table(file = "dataset.txt",
+                    header = TRUE,
+                    sep = "\t",
+                    stringsAsFactors = FALSE)
+
+#Log Transformation
+
+dm.df <- dm.df %>%
+  mutate(log.meas = log(meas))
+
+#Assign pat as factor variable
+
+dm.df$pat <- as.character(dm.df$pat)
+
+#Duplicate measures outlier identification and removal 
+
+dm.ex.df <- log.dm.ctest.func(dm.df)
+
+#Create ws.df
+
+ws.df <- dm.ex.df %>%
+  group_by(pat, time.point)%>%
+  summarise(
+    log.meas.mean = mean(log.meas))
+
+#Perform within-subject outlier test
+
+ws.ex.df <- log.ws.ctest.func(ws.df)
+
+#Create bs.df
+
+bs.df <- ws.ex.df %>%
+  group_by(pat) %>%
+  summarise(
+    log.patmeas.mean = mean(log.meas.mean)) 
+
+#Perform between-subject outlier test
+
+bs.ex.df <- log.bs.reed.func(bs.df)
+
+#Create final dfs 
+
+dm.finaldf <- subset(dm.ex.df, pat %in% bs.ex.df$pat)
+ws.finaldf <- subset(ws.ex.df, pat %in% bs.ex.df$pat)
+bs.finaldf <- bs.ex.df
+
+cas.dm.finaldf <- dm.finaldf
+cas.ws.finaldf <- ws.finaldf
+cas.bs.finaldf <- bs.finaldf
+
+#Perform steady state analysis - Add option for failure of steady state analysis
+
+log.steadystate.func(ws.finaldf)
+
+#Perform normality test
+
+log.normality.func(ws.finaldf, bs.finaldf)
+
+#Calculation of estimates
+
+results <- log.parameter.calc.func(dm.finaldf, ws.finaldf, bs.finaldf)
+
+results <- as.data.frame(results)
+
+write.table(cas.results, file = "cas_results.csv", sep = ";", row.names = FALSE)

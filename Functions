@@ -1,0 +1,227 @@
+#Packages
+
+library(GAD)
+library(outliers) 
+library(tidyverse)
+library(VCA)
+
+###### Supporting functions#####################
+
+C.test.alt <- function (object) 
+{
+  model <- deparse(substitute(object))
+  by.factor <- as.factor(1:object$rank)
+  n <- length(object$model[, 1])/object$rank
+  k <- object$rank
+  var <- tapply(object$model[, 1], rep(1:k, each = n), var)
+  int <- interaction(object$model[, -1], lex.order = TRUE)
+  f.int <- factor(int, levels = unique(int))
+  names(var) <- levels(f.int)
+  mean <- tapply(object$model[, 1], rep(1:k, each = n), mean)
+  C <- max(var)/sum(var)
+  group <- names(var)[which(var == max(var))]
+  method <- "Cochran test of homogeneity of variances"
+  alt <- paste(group)
+  f <- (1/C - 1)/(k - 1)
+  p <- 1 - pf(f, (n - 1) * (k - 1), (n - 1)) * k
+  pval <- 1 - p
+  result <- list(statistic = c(C = C), parameter = c(n = n, 
+                                                     k = k), alternative = alt, p.value = pval, method = method, 
+                 estimate = round(var, 4), mean = mean, var = var, data.names = model)
+  class(result) <- "htest"
+  return(result)
+}
+
+cochran.test.alt <- function (object, data, inlying = FALSE) 
+{
+  DNAME <- deparse(substitute(object))
+  if (is.vector(object)) {
+    by.factor <- as.factor(1:length(data))
+    vars <- object
+    names(vars) <- levels(by.factor)
+    k <- length(data)
+    df <- mean(data)
+  }
+  else {
+    if (missing(data)) 
+      data <- environment(object)
+    bn <- as.character(attr(terms(object), "variables")[-1])
+    by.factor <- as.factor(data[[bn[2]]])
+    vars <- tapply(data[[bn[1]]], by.factor, var)
+    names(vars) <- levels(by.factor)
+    k <- nlevels(by.factor)
+    df <- length(data[[bn[1]]])/k
+  }
+  if (inlying) {
+    value <- min(vars)/sum(vars)
+    group <- levels(by.factor)[which(vars == min(vars))]
+    method <- "Cochran test for inlying variance"
+    alt <- paste(group)
+    pval <- pcochran(value, df, k)
+  }
+  else {
+    value <- max(vars)/sum(vars)
+    group <- levels(by.factor)[which(vars == max(vars))]
+    method <- "Cochran test for outlying variance"
+    alt <- paste(group)
+    pval <- 1 - pcochran(value, df, k)
+  }
+  RVAL <- list(statistic = c(C = value), parameter = c(df = df, 
+                                                       k = k), alternative = alt, p.value = pval, method = method, 
+               estimate = vars, data.name = DNAME)
+  class(RVAL) <- "htest"
+  return(RVAL)
+}
+
+############Function exclusion duplicate measures outliers - Log ##############################
+
+log.dm.ctest.func <- function(dm.df)
+{
+  pat <- as.fixed(dm.df$patient)
+  tp <- as.random(dm.df$time.point) 
+  ctest.model <- C.test.alt(lm(log.meas ~ pat + tp%in%pat,data= dm.df))
+  if(ctest.model$p.value <= 0.05) {
+     print(paste("Duplicate measures", ctest.model$alt, "has outlying variance, subject is removed from dataset"))
+     excl <- strsplit(ctest.model$alt, "\\.")[[1]]
+     newDF<-dm.df[!(dm.df$pat == excl[1]), ]
+     log.dm.ctest.func(newDF)
+   }
+  else {
+    print("No outlier detected")
+    return(dm.df)
+  }
+}
+
+############ Function exclusion within patient outliers - Log ##############################
+
+log.ws.ctest.func <- function(ws.df)
+{
+  ctest.model <- cochran.test.alt(log.meas.mean ~ pat, ws.df)
+  if(ctest.model$p.value <= 0.05) {
+    print(paste("Subject", ctest.model$alt, "has outlying variance, subject is removed from dataframe"))
+    excl <- ctest.model$alt
+    newDF <- ws.df[!(ws.df$pat == excl), ]
+    log.ws.ctest.func(newDF)
+  }
+  else {
+    print("No outlier detected")
+    return(ws.df)
+  }
+}
+
+ 
+############ Function exclusion between patient outliers - Log ##############################
+
+log.bs.reed.func <- function(bs.df)
+{
+  bs.df <- bs.df[order(bs.df$log.patmeas.mean), ]
+  a <- bs.df$log.patmeas.mean[2] - bs.df$log.patmeas.mean[1]
+  b <- bs.df$log.patmeas.mean[nrow(bs.df)] - bs.df$log.patmeas.mean[nrow(bs.df) - 1]
+  c <- (bs.df$log.patmeas.mean[nrow(bs.df)] - bs.df$log.patmeas.mean[1])/3
+  if(a > c){
+    print("The lowest patient mean is outlying. The patient is removed from the dataset")
+    newDF <- bs.df[-1, ]
+    log.bs.reed.func(newDF)
+  }
+ else if(b > c) {
+    print("The highest patient mean is outlying. The patient is removed from the dataset")
+    newDF <- bs.df[-nrow(bs.df), ]
+    log.bs.reed.func(newDF)
+    }
+ else {
+    print("No outliers detected")
+    return(bs.df)
+  }
+}
+
+############ Normality tests - Log ##############################
+
+log.normality.func <- function(ws.df, bs.df) 
+{
+  norm.pat <- as.data.frame(do.call("rbind", with(ws.df, tapply(log.meas.mean, pat, function(x) unlist(shapiro.test(x)[c("statistic", "p.value")])))))
+  norm.patmean <- shapiro.test(bs.df$log.patmeas.mean)
+  if(sum(norm.pat$p.value < 0.05) > (0.5*nrow(norm.pat))) {
+    return(print(">50% of within patient values not normally distributed"))
+  }
+  else {
+    print("<50% of within patient values not normally distributed")
+    if(norm.patmean$p.value < 0.05) {
+      return(print("Means of patients are not normally distributed"))
+    }
+    else {
+      return(print("Means of patients are normally distributed"))
+    }
+  }
+}
+
+############ Steady-State - Log ##############################
+
+log.steadystate.func <- function(ws.df)
+{
+  summary.fit <- summary(lm(log.meas.mean ~ time.point, ws.df))
+  slope <- summary.fit$coefficients[2,1]
+  lower <- slope - (1.96 * summary.fit$coefficients[2,2])
+  upper <- slope + (1.96 * summary.fit$coefficients[2,2])
+  if(0 < upper & 0 > lower) {
+    return(print("Group is in steady state"))
+  }
+  else {
+    return(print("Group is not in steady state, apply inverse regression"))
+  }
+}
+
+############ Parameter calculation - Log ##############################
+
+log.parameter.calc.func <- function(dm.finaldf, ws.finaldf, bs.finaldf) 
+{
+  pat <- as.fixed(dm.finaldf$patient)
+  tp <- as.random(dm.finaldf$time.point)
+  ctest.dm.model <- C.test(lm(log.meas ~ pat + tp%in%pat,data = dm.finaldf))
+  dmvar <-  data.frame("var" = ctest.dm.model$var)
+  s2a <- mean(dmvar$var)
+  cva <- (sqrt(exp(s2a)-1)) * 100
+  cva.upper95 <- cva + (1.96 * (cva / (sqrt(2 * nrow(dm.finaldf)))))
+  cva.lower95 <- cva - (1.96 * (cva / (sqrt(2 * nrow(dm.finaldf)))))
+  ctest.ws.model <- cochran.test(log.meas.mean ~ pat, ws.finaldf)
+  wsvar <- data.frame("var" = ctest.ws.model$estimate)
+  s2i <- (mean(wsvar$var) - (0.5 * (s2a)))
+  cvi <- (sqrt(exp(s2i)-1)) * 100
+  cvi.upper95 <- cvi + (1.96 * (cvi / (sqrt(2 * nrow(ws.finaldf)))))
+  cvi.lower95 <- cvi - (1.96 * (cvi / (sqrt(2 * nrow(ws.finaldf)))))
+  lmer.fit <- summary(lmer(log.meas ~ (1|pat/time.point), dm.finaldf))
+  lmer.df <- as.data.frame(lmer.fit$varcor)
+  s2g <- lmer.df$sdcor[2]^2
+  cvg <- (sqrt(exp(s2g)-1)) * 100
+  cvg.upper95 <- cvg + (1.96 * (cvg / (sqrt(2 * nrow(bs.finaldf)))))
+  cvg.lower95 <- cvg - (1.96 * (cvg / (sqrt(2 * nrow(bs.finaldf)))))
+  ii <- (sqrt((cva^2) + (cvi^2)))/cvg
+  rcv <- 2.77 * (cva^2 + cvi^2)^0.5
+  mean.conc <- exp(mean(bs.finaldf$log.patmeas.mean))
+  min.conc <- exp(min(bs.finaldf$log.patmeas.mean))
+  max.conc <- exp(max(bs.finaldf$log.patmeas.mean))
+  n <- nrow(bs.finaldf)
+  imprecision <- 0.5 * cvi
+  bias <- 0.25 * (sqrt((cvi^2) + (cvg ^ 2)))
+  toterr <- (1.65 * cva) + bias
+  result <- list(n = n,
+                 mean = mean.conc, 
+                 minimum = min.conc, 
+                 maximum = max.conc, 
+                 cva = cva, 
+                 cva.lower = cva.lower95, 
+                 cva.upper = cva.upper95,
+                 cvi = cvi, 
+                 cvi.lower = cvi.lower95, 
+                 cvi.upper = cvi.upper95,
+                 cvg = cvg, 
+                 cvg.lower = cvg.lower95, 
+                 cvg.upper = cvg.upper95,
+                 ii = ii,
+                 rcv = rcv,
+                 imprecision = imprecision,
+                 bias = bias,
+                 total.error = toterr)
+  as.data.frame(result)
+  print(result)
+  return(result)
+}

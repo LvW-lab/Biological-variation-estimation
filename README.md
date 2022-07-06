@@ -3,16 +3,6 @@
 ## Introduction
 An R script for the estimation of biological variation. The formulas and general script are also published in van Winden et al.(Clin Chim Acta, 2021).
 
-
-### Example
-```js
-var R = require("r-script");
-```
-
-An R script for the estimation of biological variation.
-
-Description: The scripts allow for calculation of BV parameters. The formulas and general script are also published in van Winden et al.(Clin Chim Acta, 2021).
-
 ## Instructions
 
 ### Data structure

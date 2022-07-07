@@ -83,13 +83,13 @@ dm.ctest.func <- function(dm.df)
   
   # Check for outlying variance and remove it from dm df
   if(ctest.model$p.value <= 0.05) {
-    print(paste("Duplicate measures", ctest.model$alt, "has outlying variance, subject is removed from dataset"))
+    cat(paste("Duplicate measures", ctest.model$alt, "has outlying variance, subject is removed from dataset"))
     excl <- strsplit(ctest.model$alt, "\\.")[[1]]
     newDF<-dm.df[!(dm.df$pat == excl[1]), ]
     dm.ctest.func(newDF)
   }
   else {
-    print("No outlier detected")
+    cat("No outlier detected")
     return(dm.df)
   }
 }
@@ -105,13 +105,13 @@ log.dm.ctest.func <- function(dm.df)
   
   # Check for outlying variance and remove it from dm df
   if(ctest.model$p.value <= 0.05) {
-    print(paste("Duplicate measures", ctest.model$alt, "has outlying variance, subject is removed from dataset"))
+    cat(paste("Duplicate measures", ctest.model$alt, "has outlying variance, subject is removed from dataset"))
     excl <- strsplit(ctest.model$alt, "\\.")[[1]]
     newDF<-dm.df[!(dm.df$pat == excl[1]), ]
     log.dm.ctest.func(newDF)
   }
   else {
-    print("No outlier detected")
+    cat("No outlier detected")
     return(dm.df)
   }
 }
@@ -127,13 +127,13 @@ cv.dm.ctest.func <- function(dm.df)
   
   # Check for outlying variance and remove it from dm df
   if(ctest.model$p.value <= 0.05) {
-    print(paste("Duplicate measures", ctest.model$alt, "has outlying variance, subject is removed from dataset"))
+    cat(paste("Duplicate measures", ctest.model$alt, "has outlying variance, subject is removed from dataset"))
     excl <- strsplit(ctest.model$alt, "\\.")[[1]]
     newDF<-dm.df[!(dm.df$pat == excl[1]), ]
     cv.dm.ctest.func(newDF)
   }
   else {
-    print("No outlier detected")
+    cat("No outlier detected")
     return(dm.df)
   }
 }
@@ -147,13 +147,13 @@ ws.ctest.func <- function(ws.df)
   
   # Check for outlying variance and remove it from ws df
   if(ctest.model$p.value <= 0.05) {
-    print(paste("Subject", ctest.model$alt, "has outlying variance, subject is removed from dataframe"))
+    cat(paste("Subject", ctest.model$alt, "has outlying variance, subject is removed from dataframe"))
     excl <- ctest.model$alt
     newDF <- ws.df[!(ws.df$pat == excl), ]
     ws.ctest.func(newDF)
   }
   else {
-    print("No outlier detected")
+    cat("No outlier detected")
     return(ws.df)
   }
 }
@@ -167,13 +167,13 @@ log.ws.ctest.func <- function(ws.df)
   
   # Check for outlying variance and remove it from ws df
   if(ctest.model$p.value <= 0.05) {
-    print(paste("Subject", ctest.model$alt, "has outlying variance, subject is removed from dataframe"))
+    cat(paste("Subject", ctest.model$alt, "has outlying variance, subject is removed from dataframe"))
     excl <- ctest.model$alt
     newDF <- ws.df[!(ws.df$pat == excl), ]
     log.ws.ctest.func(newDF)
   }
   else {
-    print("No outlier detected")
+    cat("No outlier detected")
     return(ws.df)
   }
 }
@@ -187,13 +187,13 @@ cv.ws.ctest.func <- function(ws.df)
   
   # Check for outlying variance and remove it from ws df
   if(ctest.model$p.value <= 0.05) {
-    print(paste("Subject", ctest.model$alt, "has outlying variance, subject is removed from dataframe"))
+    cat(paste("Subject", ctest.model$alt, "has outlying variance, subject is removed from dataframe"))
     excl <- ctest.model$alt
     newDF <- ws.df[!(ws.df$pat == excl), ]
     cv.ws.ctest.func(newDF)
   }
   else {
-    print("No outlier detected")
+    cat("No outlier detected")
     return(ws.df)
   }
 }
@@ -212,17 +212,17 @@ bs.reed.func <- function(bs.df)
   
   # Test whether the minimum or maximum values are outlying
   if(a > c){
-    print("The lowest subject mean is outlying. The subject is removed from the dataset")
+    cat("The lowest subject mean is outlying. The subject is removed from the dataset")
     newDF <- bs.df[-1, ]
     bs.reed.func(newDF)
   }
   else if(b > c) {
-    print("The highest subject mean is outlying. The subject is removed from the dataset")
+    cat("The highest subject mean is outlying. The subject is removed from the dataset")
     newDF <- bs.df[-nrow(bs.df), ]
     bs.reed.func(newDF)
   }
   else {
-    print("No outliers detected")
+    cat("No outliers detected")
     return(bs.df)
   }
 }
@@ -241,17 +241,17 @@ log.bs.reed.func <- function(bs.df)
   
   # Test whether the minimum or maximum values are outlying
   if(a > c){
-    print("The lowest subject mean is outlying. The subject is removed from the dataset")
+    cat("The lowest subject mean is outlying. The subject is removed from the dataset")
     newDF <- bs.df[-1, ]
     log.bs.reed.func(newDF)
   }
   else if(b > c) {
-    print("The highest subject mean is outlying. The subject is removed from the dataset")
+    cat("The highest subject mean is outlying. The subject is removed from the dataset")
     newDF <- bs.df[-nrow(bs.df), ]
     log.bs.reed.func(newDF)
   }
   else {
-    print("No outliers detected")
+    cat("No outliers detected")
     return(bs.df)
   }
 }
@@ -265,17 +265,17 @@ normality.func <- function(ws.df, bs.df)
   norm.patmean <- shapiro.test(bs.df$patmeas.mean)
   # Check whether at least 50% of the within-subject values are normally distributed 
   if(sum(norm.pat$p.value < 0.05) > (0.5*nrow(norm.pat))) {
-    return(print("Warning! <50% of within-subject values normally distributed"))
+    return(print("Warning! Normality can be assumed for <50% subjects"))
   }
   else {
-    print("Data OK! >50% of within-subject values normally distributed")
+    cat("Data OK! Normality can be assumed for >50% subjects")
     
     # Check whether subject mean values are normally distributed 
     if(norm.patmean$p.value < 0.05) {
-      return(print("Warning! Means of patients are not normally distributed"))
+      return(cat("Warning! Normality cannot be assumed for mean values of subjects"))
     }
     else {
-      return(print("Means of patients are normally distributed"))
+      return(cat("Normality can be assumed for mean values of subjects"))
     }
   }
 }
@@ -290,17 +290,17 @@ log.normality.func <- function(ws.df, bs.df)
   
   # Check whether at least 50% of the within-subject values are normally distributed 
   if(sum(norm.pat$p.value < 0.05) > (0.5*nrow(norm.pat))) {
-    return(print("Warning! <50% of within-subject values normally distributed"))
+    return(cat("Warning! Normality can be assumed for <50% subjects"))
   }
   else {
-    print("Data OK! >50% of within-subject values normally distributed")
+    cat("Data OK! Normality can be assumed for >50% subjects")
     
     # Check whether subject mean values are normally distributed 
     if(norm.patmean$p.value < 0.05) {
-      return(print("Warning! Means of patients are not normally distributed"))
+      return(cat("Warning! Normality cannot be assumed for mean values of subjects"))
     }
     else {
-      return(print("Means of patients are normally distributed"))
+      return(cat("Normality can be assumed for mean values of subjects"))
     }
   }
 }
@@ -314,11 +314,10 @@ cv.normality.func <- function(ws.df)
   
   # Check whether at least 50% of the within-subject values are normally distributed 
   if(sum(norm.pat$p.value < 0.05) > (0.5*nrow(norm.pat))) {
-    return(print("Warning! <50% of within-subject values normally distributed"))
+    return(cat("Warning! Normality can be assumed for <50% subjects"))
   }
   else {
-    return("Data OK! >50% of within-subject values normally distributed")
-    
+    return(cat("Data OK! Normality can be assumed for >50% subjects"))    
   }
 }
 
@@ -335,10 +334,10 @@ steadystate.func <- function(ws.df)
   
   # Check whether CI of slope contains 0
   if(0 < upper & 0 > lower) {
-    return(print("Group is in steady state"))
+    return(cat("Group is in steady state"))
   }
   else {
-    return(print("Group is not in steady state, apply inverse regression"))
+    return(cat("Group is not in steady state, apply inverse regression"))
   }
 }
 
@@ -355,10 +354,10 @@ log.steadystate.func <- function(ws.df)
   
   # Check whether CI of slope contains 0
   if(0 < upper & 0 > lower) {
-    return(print("Group is in steady state"))
+    return(cat("Group is in steady state"))
   }
   else {
-    return(print("Group is not in steady state, apply inverse regression"))
+    return(cat("Group is not in steady state, apply inverse regression"))
   }
 }
 
@@ -374,10 +373,10 @@ cv.steadystate.func <- function(ws.df)
   
   # Check whether CI of slope contains 0
   if(0 < upper & 0 > lower) {
-    return(print("Group is in steady state"))
+    return(cat("Group is in steady state"))
   }
   else {
-    return(print("Group is not in steady state, apply inverse regression"))
+    return(cat("Group is not in steady state, apply inverse regression"))
   }
 }
 

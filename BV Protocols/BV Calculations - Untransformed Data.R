@@ -11,7 +11,7 @@ dm.df <- read.table(file = "dataset_example.txt",
                     sep = "\t",
                     stringsAsFactors = FALSE)
 
-# Assign pat as factor variable - necessary for c test
+# Assign pat as character variable - necessary for c test
 dm.df$pat <- as.character(dm.df$pat)
 
 # Duplicate measures outlier identification and removal

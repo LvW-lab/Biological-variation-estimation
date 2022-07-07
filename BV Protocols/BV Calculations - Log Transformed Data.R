@@ -16,7 +16,7 @@ dm.df <- read.table(file = "dataset_example.txt",
 dm.df <- dm.df %>%
   mutate(log.meas = log(meas))
 
-# Assign pat as factor variable - necessary for c test
+# Assign pat as character variable - necessary for c test
 dm.df$pat <- as.character(dm.df$pat)
 
 # Duplicate measures outlier identification and removal

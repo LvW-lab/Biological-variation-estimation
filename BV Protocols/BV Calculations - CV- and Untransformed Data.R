@@ -54,6 +54,7 @@ bs.df <- ws.ex.df %>%
 
 # Between-subject outlier identification and removal
 # Reeds Criterion Test
+# Note that at least two values are required to perform this test!
 bs.ex.df <- bs.reed.func(bs.df)
 
 # Create final dfs by removing all outlying patients that were identified
@@ -66,11 +67,13 @@ bs.finaldf <- bs.ex.df
 cv.steadystate.func(ws.finaldf)
 
 # Perform normality test for CV values
-# Shapiro-Wilk test on within- and between-subject values
+# Shapiro-Wilk test on within-subject values
+# Note that at least three values are required to perform this test!
 cv.normality.func(ws.finaldf)
 
 # Perform normality test for normal values
 # Shapiro-Wilk test on within- and between-subject values
+# Note that at least three values are required to perform this test!
 normality.func(ws.finaldf, bs.finaldf)
 
 # Calculation of all BV estimates

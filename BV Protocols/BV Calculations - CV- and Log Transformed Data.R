@@ -73,6 +73,7 @@ cv.normality.func(ws.finaldf)
 
 # Perform normality test for normal values
 # Shapiro-Wilk test on within- and between-subject values
+# Note that at least three values are required to perform this test!
 normality.func(ws.finaldf, bs.finaldf)
 
 # Calculation of all BV estimates

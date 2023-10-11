@@ -390,7 +390,7 @@ parameter.calc.func <- function(dm.finaldf, ws.finaldf, bs.finaldf)
   ctest.dm.model <- C.test(lm(meas ~ pat + tp%in%pat,data = dm.finaldf))
   dmvar <-  data.frame("var" = ctest.dm.model$var)
   s2a <- mean(dmvar$var)
-  cva <- sqrt(s2a) * 100
+  cva <- (sqrt(s2a) / mean(dm.finaldf$meas)) * 100
   cva.upper95 <- cva + (1.96 * (cva / (sqrt(2 * nrow(dm.finaldf)))))
   cva.lower95 <- cva - (1.96 * (cva / (sqrt(2 * nrow(dm.finaldf)))))
   
@@ -398,7 +398,7 @@ parameter.calc.func <- function(dm.finaldf, ws.finaldf, bs.finaldf)
   ctest.ws.model <- cochran.test(meas.mean ~ pat, ws.finaldf)
   wsvar <- data.frame("var" = ctest.ws.model$estimate)
   s2i <- (mean(wsvar$var) - (0.5 * (s2a)))
-  cvi <- sqrt(s2i) * 100
+  cvi <- (sqrt(s2i) / mean(ws.finaldf$meas.mean)) * 100
   cvi.upper95 <- cvi + (1.96 * (cvi / (sqrt(2 * nrow(ws.finaldf)))))
   cvi.lower95 <- cvi - (1.96 * (cvi / (sqrt(2 * nrow(ws.finaldf)))))
   
@@ -406,7 +406,7 @@ parameter.calc.func <- function(dm.finaldf, ws.finaldf, bs.finaldf)
   lmer.fit <- summary(lmer(meas ~ (1|pat/time.point), dm.finaldf))
   lmer.df <- as.data.frame(lmer.fit$varcor)
   s2g <- lmer.df$sdcor[2]^2
-  cvg <- sqrt(s2g) * 100
+  cvg <- (sqrt(s2g) / mean(dm.finaldf$meas)) * 100
   cvg.upper95 <- cvg + (1.96 * (cvg / (sqrt(2 * nrow(bs.finaldf)))))
   cvg.lower95 <- cvg - (1.96 * (cvg / (sqrt(2 * nrow(bs.finaldf)))))
   
@@ -528,7 +528,7 @@ cv.norm.parameter.calc.func <- function(dm.finaldf, ws.finaldf, bs.finaldf)
   ctest.dm.model <- C.test(lm(cv.meas ~ pat + tp%in%pat,data = dm.finaldf))
   dmvar <-  data.frame("var" = ctest.dm.model$var)
   s2a <- mean(dmvar$var)
-  cva <- (sqrt(exp(s2a)-1)) * 100
+  cva <- (sqrt(s2a) * 100
   cva.upper95 <- cva + (1.96 * (cva / (sqrt(2 * nrow(dm.finaldf)))))
   cva.lower95 <- cva - (1.96 * (cva / (sqrt(2 * nrow(dm.finaldf)))))
   
@@ -536,7 +536,7 @@ cv.norm.parameter.calc.func <- function(dm.finaldf, ws.finaldf, bs.finaldf)
   ctest.ws.model <- cochran.test(cv.meas.mean ~ pat, ws.finaldf)
   wsvar <- data.frame("var" = ctest.ws.model$estimate)
   s2i <- (mean(wsvar$var) - (0.5 * (s2a)))
-  cvi <- (sqrt(exp(s2i)-1)) * 100
+  cvi <- sqrt(s2i) * 100
   cvi.upper95 <- cvi + (1.96 * (cvi / (sqrt(2 * nrow(ws.finaldf)))))
   cvi.lower95 <- cvi - (1.96 * (cvi / (sqrt(2 * nrow(ws.finaldf)))))
   
@@ -544,7 +544,7 @@ cv.norm.parameter.calc.func <- function(dm.finaldf, ws.finaldf, bs.finaldf)
   lmer.fit <- summary(lmer(meas ~ (1|pat/time.point), dm.finaldf))
   lmer.df <- as.data.frame(lmer.fit$varcor)
   s2g <- lmer.df$sdcor[2]^2
-  cvg <- (sqrt(exp(s2g)-1)) * 100
+  cvg <- sqrt(s2g) * 100
   cvg.upper95 <- cvg + (1.96 * (cvg / (sqrt(2 * nrow(bs.finaldf)))))
   cvg.lower95 <- cvg - (1.96 * (cvg / (sqrt(2 * nrow(bs.finaldf)))))
   
@@ -598,7 +598,7 @@ cv.log.parameter.calc.func <- function(dm.finaldf, ws.finaldf, bs.finaldf)
   ctest.dm.model <- C.test(lm(cv.meas ~ pat + tp%in%pat,data = dm.finaldf))
   dmvar <-  data.frame("var" = ctest.dm.model$var)
   s2a <- mean(dmvar$var)
-  cva <- (sqrt(exp(s2a)-1)) * 100
+  cva <- (sqrt(s2a) * 100
   cva.upper95 <- cva + (1.96 * (cva / (sqrt(2 * nrow(dm.finaldf)))))
   cva.lower95 <- cva - (1.96 * (cva / (sqrt(2 * nrow(dm.finaldf)))))
   
@@ -606,7 +606,7 @@ cv.log.parameter.calc.func <- function(dm.finaldf, ws.finaldf, bs.finaldf)
   ctest.ws.model <- cochran.test(cv.meas.mean ~ pat, ws.finaldf)
   wsvar <- data.frame("var" = ctest.ws.model$estimate)
   s2i <- (mean(wsvar$var) - (0.5 * (s2a)))
-  cvi <- (sqrt(exp(s2i)-1)) * 100
+  cvi <- sqrt(s2i) * 100
   cvi.upper95 <- cvi + (1.96 * (cvi / (sqrt(2 * nrow(ws.finaldf)))))
   cvi.lower95 <- cvi - (1.96 * (cvi / (sqrt(2 * nrow(ws.finaldf)))))
   

@@ -78,7 +78,7 @@ normality.func(ws.finaldf, bs.finaldf)
 
 # Calculation of all BV estimates
 # Results are saved in external results csv file
-results <- cv.norm.parameter.calc.func(dm.finaldf, ws.finaldf, bs.finaldf)
+results <- cv.log.parameter.calc.func(dm.finaldf, ws.finaldf, bs.finaldf)
 
 results <- as.data.frame(results)
 
